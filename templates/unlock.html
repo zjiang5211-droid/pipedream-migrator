@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The $29 Pipedream Migration Pack</title>
+<meta name="description" content="Unlock full n8n-ready JSON downloads for every Pipedream workflow plus the bulk migration pack. One-time $29.">
+<style>
+:root{--bg:#0f1115;--ink:#e8eaf0;--muted:#9aa0b4;--accent:#7c6cf0;--accent-d:#5f52d6;--card:#171a21;--line:#262b38;--ok:#34c77b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+.wrap{max-width:680px;margin:0 auto;padding:0 18px}
+header.top{padding:22px 0 4px}.logo a{color:var(--ink);text-decoration:none;font-weight:800;font-size:20px}.logo span{color:var(--accent)}
+.hero{text-align:center;padding:36px 0 10px}.hero h1{font-size:clamp(28px,5vw,40px);letter-spacing:-1px;margin:0 0 10px}
+.hero .price{font-size:56px;font-weight:800;color:var(--accent)}.hero .per{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin:22px 0}
+.card ul{margin:0;padding-left:20px}.card li{margin:10px 0}
+.card li b{color:var(--ok)}
+a.btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:14px 34px;border-radius:12px;font-size:18px;margin-top:8px}
+a.btn:hover{background:var(--accent-d)}
+.center{text-align:center}
+.note{font-size:14px;color:var(--muted)}
+.keybox{margin-top:18px}.keybox input{font-size:15px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:#12151c;color:var(--ink);width:240px}
+.keybox button{background:var(--accent);color:#fff;border:none;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;font-size:15px;margin-left:8px}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:22px 0 40px;font-size:14px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><div class="logo"><a href="/">pipedream<span>→</span>n8n</a></div></header>
+<div class="hero">
+  <h1>The Migration Pack</h1>
+  <div class="price">$29</div>
+  <div class="per">one-time · per project export · no subscription</div>
+</div>
+<div class="card">
+  <ul>
+    <li><b>Full n8n JSON</b> for every workflow — import-ready, nodes + connections wired</li>
+    <li><b>Bulk ZIP</b> — all workflows plus the migration checklist as Markdown</li>
+    <li><b>Your code preserved</b> — every code step carries the original code, flagged for review</li>
+    <li><b>Free forever:</b> inventory, checklist, and n8n previews stay free</li>
+  </ul>
+  <div class="center">
+    <a class="btn" href="/payment-coming-soon">Get the pack — $29</a>
+    <p class="note">One-time payment. If the generated pack doesn't save you real migration time, email us and we'll refund it.</p>
+  </div>
+  <div class="keybox center">
+    <p class="note">Already have an unlock key?</p>
+    <input type="text" id="key" placeholder="Enter key">
+    <button id="go">Unlock</button>
+    <p class="note" id="msg"></p>
+  </div>
+</div>
+<footer>Not affiliated with Pipedream or n8n.</footer>
+</div>
+<script>
+document.getElementById('go').addEventListener('click',async()=>{
+  const key=document.getElementById('key').value.trim(),msg=document.getElementById('msg');
+  const r=await fetch('/api/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});
+  const j=await r.json();
+  msg.textContent=j.ok?'✓ Unlocked — downloads are now available on your analysis page.':'Invalid key.';
+  msg.style.color=j.ok?'var(--ok)':'#f06060';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migration analysis — {{ project.name }}</title>
+<meta name="description" content="Pipedream export analysis: workflow inventory, n8n-ready JSON previews, and migration checklist.">
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0f1115;--ink:#e8eaf0;--muted:#9aa0b4;--accent:#7c6cf0;--accent-d:#5f52d6;--card:#171a21;--line:#262b38;--ok:#34c77b;--warn:#f0a44b;--bad:#f06060}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6}
+.wrap{max-width:960px;margin:0 auto;padding:0 18px}
+header.top{padding:22px 0 4px;display:flex;align-items:center;gap:12px}
+.logo{font-weight:800;font-size:20px}.logo a{color:var(--ink);text-decoration:none}.logo span{color:var(--accent)}
+h1{font-size:26px;letter-spacing:-.5px;margin:18px 0 4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .v{font-size:26px;font-weight:800;color:var(--accent)}.stat .k{font-size:13px;color:var(--muted)}
+h2{font-size:22px;margin:32px 0 10px;letter-spacing:-.5px}
+.wf{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+.wf h3{margin:0 0 6px;font-size:18px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;margin:0 6px 6px 0}
+.t-webhook{background:#1d2b4d;color:#7fb2ff}.t-schedule{background:#2b2340;color:#c4a5ff}
+.t-app_source{background:#3a2b1d;color:#f0a44b}.t-manual{background:#2a2d38;color:#9aa0b4}
+.k-code{background:#173a2b;color:#34c77b}.k-action{background:#1d2b4d;color:#7fb2ff}
+.k-condition{background:#3a2b1d;color:#f0a44b}.k-delay{background:#3a2b1d;color:#f0a44b}
+.k-unknown{background:#3a1d1d;color:#f06060}
+.steps{margin:10px 0;padding-left:0;list-style:none}
+.steps li{padding:7px 0;border-top:1px dashed var(--line);font-size:14px}
+.steps .sn{font-weight:600}
+pre.preview{background:#0b0d12;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.5;max-height:340px;margin:10px 0}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+a.btn,.btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:10px 20px;border-radius:10px;font-size:15px;border:none;cursor:pointer}
+a.btn:hover{background:var(--accent-d)}
+a.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+a.btn.ghost:hover{border-color:var(--accent)}
+.lockbox{background:#141824;border:1px dashed #3a4157;border-radius:12px;padding:16px 18px;margin:12px 0;font-size:14px;color:var(--muted)}
+.check{margin:10px 0}.check .item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0}
+.check .sev{font-size:12px;font-weight:800;padding:2px 10px;border-radius:20px;margin-right:8px}
+.sev.must{background:#3a1d1d;color:#f06060}.sev.should{background:#3a2b1d;color:#f0a44b}
+.check .t{font-weight:700}.check .d{font-size:14px;color:var(--muted);margin-top:4px}
+table.cost{width:100%;border-collapse:collapse;font-size:15px;margin:10px 0}
+table.cost td,table.cost th{border-bottom:1px solid var(--line);padding:10px 8px;text-align:left;vertical-align:top}
+table.cost td.m{font-weight:800;white-space:nowrap}
+.note{font-size:13px;color:var(--muted)}
+.warnbox{background:#2a1f14;border:1px solid #5a4426;border-radius:12px;padding:14px 18px;margin:14px 0;font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:22px 0 40px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><div class="logo"><a href="/">pipedream<span>→</span>n8n</a></div></header>
+
+<h1>Analysis: {{ project.name }}</h1>
+<div class="sub">{{ project.inventory.workflow_count }} workflow(s) analyzed · free inventory &amp; checklist · n8n JSON preview below</div>
+
+{% if project.errors %}
+<div class="warnbox">⚠ {{ project.errors|length }} file(s) couldn't be parsed:<br>
+{% for e in project.errors %}<span class="note">{{ e }}</span><br>{% endfor %}</div>
+{% endif %}
+
+<h2>📦 Inventory</h2>
+<div class="cards">
+  <div class="stat"><div class="v">{{ project.inventory.workflow_count }}</div><div class="k">workflows</div></div>
+  <div class="stat"><div class="v">{{ project.inventory.total_steps }}</div><div class="k">total steps</div></div>
+  <div class="stat"><div class="v">{{ project.inventory.code_steps }}</div><div class="k">code steps ({{ (project.inventory.code_ratio*100)|int }}%)</div></div>
+  <div class="stat"><div class="v">{{ project.inventory.timer_count }}</div><div class="k">timers</div></div>
+  <div class="stat"><div class="v">{{ project.inventory.unique_apps|length }}</div><div class="k">integrations</div></div>
+  <div class="stat"><div class="v">{{ project.inventory.redacted_count }}</div><div class="k">redacted secrets</div></div>
+</div>
+{% if project.inventory.trigger_breakdown %}
+<p class="note">Triggers: {% for k,v in project.inventory.trigger_breakdown.items() %}<span class="tag t-{{ k }}">{{ k.replace('_',' ') }} × {{ v }}</span>{% endfor %}</p>
+{% endif %}
+{% if project.inventory.unique_apps %}
+<p class="note">Integrations detected: {{ project.inventory.unique_apps|join(', ') }}</p>
+{% endif %}
+
+<h2>🔄 n8n workflows</h2>
+{% for w in project.workflows %}
+{% set pv = previews[w.id] %}
+<div class="wf">
+  <h3>{{ w.name }}</h3>
+  <div>
+    <span class="tag t-{{ w.trigger.kind }}">{{ w.trigger.label }}</span>
+    <span class="note">{{ w.trigger.detail }}</span>
+  </div>
+  <ul class="steps">
+  {% for s in w.steps %}
+    <li><span class="tag k-{{ s.kind }}">{{ s.kind }}</span><span class="sn">{{ s.name }}</span>
+      <span class="note"> — {{ s.label }}</span></li>
+  {% endfor %}
+  </ul>
+  <div class="note" style="margin:8px 0">n8n import preview — <b>{{ pv.node_count }} nodes</b>, {{ pv.total_lines }} lines
+    {% if pv.truncated %}(showing first 60){% endif %}</div>
+  <pre class="preview">{{ pv.text }}</pre>
+  <div class="btnrow">
+    {% if unlocked %}
+    <a class="btn" href="/api/project/{{ project.id }}/n8n/{{ w.id }}">⬇ Download n8n JSON</a>
+    {% else %}
+    <a class="btn" href="/unlock">🔓 Unlock full n8n JSON — $29</a>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+{% if unlocked %}
+<div class="btnrow"><a class="btn" href="/api/project/{{ project.id }}/bundle.zip">⬇ Download full migration pack (.zip — all n8n JSONs + checklist)</a></div>
+{% else %}
+<div class="lockbox">🔒 <b>Full n8n JSON downloads</b> are part of the $29 migration pack (one-time). The inventory, checklist and previews above are free forever. <a href="/unlock" style="color:var(--accent)">What's in the pack →</a></div>
+{% endif %}
+
+<h2>✅ Migration checklist</h2>
+<div class="check">
+{% for c in project.checklist %}
+  <div class="item"><span class="sev {{ c.severity }}">{{ 'MUST' if c.severity=='must' else 'SHOULD' }}</span><span class="t">{{ c.title }}</span><div class="d">{{ c.detail }}</div></div>
+{% endfor %}
+</div>
+
+<h2>💰 Cost comparison</h2>
+<table class="cost">
+  <tr><th>Option</th><th>Monthly</th><th>Notes</th></tr>
+  {% for r in cost.rows %}
+  <tr><td>{{ r.option }}</td><td class="m">{{ ('$%.2f'|format(r.monthly)) if r.monthly is not none else '—' }}</td><td class="note">{{ r.note }}</td></tr>
+  {% endfor %}
+</table>
+{% if cost.est_yearly_saving_vs_selfhosted and cost.est_yearly_saving_vs_selfhosted > 0 %}
+<p>Estimated yearly saving moving to n8n self-hosted: <b style="color:var(--ok)">${{ cost.est_yearly_saving_vs_selfhosted }}</b> (vs a ~$6/mo VPS).</p>
+{% endif %}
+
+<footer>Analysis generated from your export file — parsed in memory, nothing stored. Not affiliated with Pipedream or n8n.</footer>
+</div>
+</body>
+</html>

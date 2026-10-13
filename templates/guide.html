@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+<style>
+:root{--bg:#0f1115;--ink:#e8eaf0;--muted:#9aa0b4;--accent:#7c6cf0;--card:#171a21;--line:#262b38}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.75}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px}
+header.top{padding:22px 0 4px}.logo a{color:var(--ink);text-decoration:none;font-weight:800;font-size:20px}.logo span{color:var(--accent)}
+article{padding:10px 0 30px}article h1{font-size:clamp(26px,4vw,36px);letter-spacing:-1px;line-height:1.2}
+article h2{font-size:24px;margin:34px 0 10px;letter-spacing:-.5px}article h3{font-size:19px;margin:26px 0 8px}
+article p,article li{color:#cfd4e2}article a{color:var(--accent)}
+article code{background:#1c2029;padding:2px 6px;border-radius:6px;font-size:.9em}
+article pre{background:#0b0d12;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-size:13px}
+article pre code{background:none;padding:0}
+article blockquote{border-left:3px solid var(--accent);margin:18px 0;padding:6px 18px;color:var(--muted)}
+.cta{background:var(--card);border:1px solid var(--accent);border-radius:14px;padding:22px;margin:30px 0;text-align:center}
+.cta a{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:10px;margin-top:8px}
+.related{margin:30px 0}.related a{display:block;color:var(--muted);text-decoration:none;padding:8px 0}.related a:hover{color:var(--ink)}
+footer{border-top:1px solid var(--line);margin-top:10px;padding:22px 0 40px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><div class="logo"><a href="/">pipedream<span>→</span>n8n</a></div></header>
+<article>
+<h1>{{ title }}</h1>
+{{ content|safe }}
+<div class="cta">
+  <b>Don't rebuild blind.</b><br>
+  <span style="color:var(--muted)">Upload your Pipedream export and get n8n-ready JSON plus the migration checklist — free.</span><br>
+  <a href="/">Analyze my export →</a>
+</div>
+</article>
+{% if guides|length > 1 %}
+<div class="related"><b>More guides:</b>
+{% for g in guides %}<a href="/guides/{{ g.slug }}">→ {{ g.title }}</a>{% endfor %}
+</div>
+{% endif %}
+<footer>Not affiliated with Pipedream or n8n. Dates from <a href="https://pipedream.com/docs/workflows" style="color:var(--muted)">pipedream.com/docs</a>.</footer>
+</div>
+</body>
+</html>
