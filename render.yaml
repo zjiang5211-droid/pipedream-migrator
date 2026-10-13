@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pipedream-migrator
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Render 免费版：512MB RAM / 0.1 CPU
+    # 纯 Python 应用，单 worker 足够
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PDM_UNLOCK_KEY
+        sync: false
