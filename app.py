@@ -233,6 +233,11 @@ def guide_page(slug):
 
 # ------------------------------------------------------------------- misc
 
+@app.get("/healthz")
+def healthz():
+    return jsonify({"ok": True})
+
+
 @app.get("/sitemap.xml")
 def sitemap():
     urls = ["/", "/guides", "/unlock"]
