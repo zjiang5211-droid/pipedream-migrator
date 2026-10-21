@@ -6,6 +6,8 @@ walk away with n8n-ready workflows."
 Routes:
   GET  /                        landing + upload tool
   POST /api/analyze             ZIP/JSON export -> project analysis (free)
+  POST /api/import/github       GitHub Sync repo URL -> project analysis (free)
+  POST /api/import/api-key      Pipedream API key -> project analysis (free)
   GET  /project/<pid>           results page: inventory, checklist, n8n previews
   GET  /api/project/<pid>/preview/<wid>   n8n JSON preview, first 60 lines (free)
   GET  /api/project/<pid>/n8n/<wid>       full n8n JSON download ($29 unlock)
@@ -38,6 +40,7 @@ from flask import (Flask, request, jsonify, send_file, render_template,
 
 import config
 from analyzer import analyze_export, generate_n8n_workflow, n8n_preview, cost_comparison
+from importers import fetch_github_project, fetch_api_project, ImportProblem
 import guides as guides_mod
 
 app = Flask(__name__)
@@ -130,12 +133,51 @@ def api_analyze():
     if not project["workflows"] and not project["errors"]:
         return jsonify({"ok": False,
                         "error": "No workflows found. Upload the ZIP from Pipedream's export tool (one project at a time)."}), 400
+    return _finish_project(project, monthly)
+
+
+def _finish_project(project, monthly):
     project["ts"] = time.time()
     project["cost"] = cost_comparison(monthly)
     PROJECTS[project["id"]] = project
     _bump_stat("analyses")
     return jsonify({"ok": True, "project_id": project["id"],
                     "redirect": url_for("project_page", pid=project["id"])})
+
+
+# ------------------------------------------- second import channel
+# Free/Basic plans can't use Export Workflows (no File Store). These two
+# endpoints let those users import via a GitHub Sync repo or their own
+# Pipedream API key instead. The API key is used for this request only —
+# it is never stored in the project, on disk, or in logs.
+
+@app.post("/api/import/github")
+def api_import_github():
+    _sweep()
+    body = request.get_json(silent=True) or {}
+    try:
+        project = fetch_github_project(body.get("repo_url", ""))
+    except ImportProblem as e:
+        return jsonify({"ok": False, "error": e.message}), e.status
+    if not project["workflows"]:
+        return jsonify({"ok": False, "error":
+                        "仓库读到了，但没有解析出任何 workflow。"
+                        "请确认这是 Pipedream GitHub Sync 仓库（每个 workflow 文件夹里有 workflow.yaml）。"}), 400
+    return _finish_project(project, body.get("monthly_spend"))
+
+
+@app.post("/api/import/api-key")
+def api_import_api_key():
+    _sweep()
+    body = request.get_json(silent=True) or {}
+    try:
+        project = fetch_api_project(body.get("api_key", ""))
+    except ImportProblem as e:
+        return jsonify({"ok": False, "error": e.message}), e.status
+    if not project["workflows"]:
+        return jsonify({"ok": False, "error":
+                        "API 读到了，但没有解析出任何 workflow。请稍后再试，或改用 GitHub Sync 仓库导入。"}), 400
+    return _finish_project(project, body.get("monthly_spend"))
 
 
 @app.get("/api/project/<pid>/preview/<wid>")
