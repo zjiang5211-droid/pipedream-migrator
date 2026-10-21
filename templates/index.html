@@ -89,6 +89,32 @@ footer a{color:var(--muted)}
   <div class="error" id="error"></div>
 </div>
 
+<div class="tool-card" id="import">
+  <div style="font-size:19px;font-weight:700">On Free or Basic? You can't export — import instead</div>
+  <p style="color:var(--muted);font-size:15px;margin:8px 0 4px">Pipedream's export tool writes to the project File Store, which Free and Basic plans don't include. If your project was ever synced to GitHub — or you can mint a Pipedream API key — pull your workflows in directly. Same inventory, same checklist, same n8n pack, same $29 unlock.</p>
+  <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">
+    <b>Option A — GitHub Sync repo</b>
+    <p style="color:var(--muted);font-size:14px;margin:6px 0">Paste the public GitHub repo your Pipedream project syncs to. We read the <code>workflow.yaml</code> files and code steps straight from it.</p>
+    <div class="row" style="justify-content:flex-start">
+      <input type="text" id="gh-url" placeholder="https://github.com/you/your-sync-repo" style="width:min(430px,100%)">
+      <button class="primary" id="gh-go">Import from GitHub</button>
+    </div>
+  </div>
+  <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
+    <b>Option B — Pipedream API key</b>
+    <p style="color:var(--muted);font-size:14px;margin:6px 0">In Pipedream, open <b>Settings → API</b> and copy your user API key. We use it once, for this import only — it is never stored, never logged, and you can delete it in Pipedream right after.</p>
+    <div class="row" style="justify-content:flex-start">
+      <input type="password" id="pd-key" placeholder="Paste your Pipedream API key" style="width:min(430px,100%)" autocomplete="off">
+      <button class="primary" id="pd-go">Import with API key</button>
+    </div>
+  </div>
+  <div class="row" style="justify-content:flex-start;margin-top:14px">
+    <input type="text" id="import-spend" placeholder="Pipedream $/mo (optional)">
+  </div>
+  <div class="progress" id="import-progress">Importing… fetching your workflows can take up to a minute.</div>
+  <div class="error" id="import-error"></div>
+</div>
+
 <section class="content">
   <h2>What you get</h2>
   <div class="steps">
@@ -117,6 +143,7 @@ footer a{color:var(--muted)}
   <h2>FAQ</h2>
   <div class="faq">
     <details><summary>What exactly do I upload?</summary><p>In Pipedream, open your project's Settings, choose Export Workflows, and download the ZIP. Upload that ZIP here — or a single workflow JSON. The file is parsed in memory and never stored.</p></details>
+    <details><summary>I'm on Free/Basic and Export Workflows isn't available — can I still migrate?</summary><p>Yes. The export tool needs a plan with File Stores, but your workflows aren't trapped: if the project was ever synced to GitHub, paste the repo URL into the import box above; otherwise paste a Pipedream API key (Settings → API). Both produce the same inventory, checklist and n8n pack as an export upload. The API key is used once for the import and is never stored or logged.</p></details>
     <details><summary>What does the $29 pack unlock?</summary><p>Full n8n JSON downloads for every workflow plus a bulk ZIP with the migration checklist as Markdown. The inventory, checklist and n8n previews are free forever. <a href="/unlock">Details →</a></p></details>
     <details><summary>Do you see my API keys or OAuth tokens?</summary><p>No. Pipedream's export replaces anything credential-like with <code>&lt;redacted&gt;</code>, and we never ask for tokens. You reconnect your own accounts inside n8n.</p></details>
     <details><summary>Will the n8n JSON import cleanly?</summary><p>It's generated in n8n's public workflow format (nodes + connections) and imports via n8n's import. Every code step carries your original code with a review flag; app actions become the matching n8n node with your original settings preserved in notes. Review before relying on it — the checklist tells you what to check.</p></details>
@@ -153,6 +180,30 @@ go.addEventListener('click',async()=>{
     if(!j.ok)throw new Error(j.error||'Analysis failed');
     location.href=j.redirect;
   }catch(e){err.textContent=e.message;err.style.display='block';go.disabled=false;prog.style.display='none';}
+});
+
+const iprog=document.getElementById('import-progress'),ierr=document.getElementById('import-error');
+async function runImport(path,payload,btn){
+  btn.disabled=true;iprog.style.display='block';ierr.style.display='none';
+  const spend=document.getElementById('import-spend').value.trim();
+  if(spend)payload.monthly_spend=spend;
+  try{
+    const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.error||'Import failed');
+    location.href=j.redirect;
+  }catch(e){ierr.textContent=e.message;ierr.style.display='block';btn.disabled=false;iprog.style.display='none';}
+}
+const ghBtn=document.getElementById('gh-go'),pdBtn=document.getElementById('pd-go');
+ghBtn.addEventListener('click',()=>{
+  const url=document.getElementById('gh-url').value.trim();
+  if(!url){ierr.textContent='请先粘贴 GitHub 仓库地址。';ierr.style.display='block';return;}
+  runImport('/api/import/github',{repo_url:url},ghBtn);
+});
+pdBtn.addEventListener('click',()=>{
+  const key=document.getElementById('pd-key').value.trim();
+  if(!key){ierr.textContent='请先粘贴你的 Pipedream API 密钥。';ierr.style.display='block';return;}
+  runImport('/api/import/api-key',{api_key:key},pdBtn);
 });
 </script>
 </body>
