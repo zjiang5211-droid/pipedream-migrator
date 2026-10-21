@@ -11,7 +11,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py config.py analyzer.py guides.py ./
+COPY app.py config.py analyzer.py guides.py importers.py ./
 COPY templates/ templates/
 COPY guides/ guides/
 COPY samples/sample-project.zip samples/sample-project.zip
